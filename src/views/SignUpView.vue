@@ -1,16 +1,25 @@
 <script setup>
-    import { ref } from 'vue'
+    import { ref } from 'vue';
+    import authService from '@/services/authService';
+    import { useRouter } from 'vue-router';
 
-    const name = ref('')
-    const email = ref('')
-    const password = ref('')
-    const confirmPassword = ref('')
+    const router = useRouter();
+    const name = ref('');
+    const email = ref('');
+    const password = ref('');
+    const confirmPassword = ref('');
 
     const handleSignUp = () => {
         if (password.value !== confirmPassword.value) {
-            alert("Les mots de passe ne correspondent pas !")
-            return
+            alert("Les mots de passe ne correspondent pas !");
+            return;
         }
+        const result = authService.register(name.value, email.value, password.value);
+        if (result.success) {
+            alert("Compte créé ! Connectez-vous.");
+            router.push('/');
+        } 
+        else { alert(result.message) }
     }
 </script>
 
@@ -21,7 +30,6 @@
                 <h2>Créer un compte</h2>
                 <p>Rejoignez-nous pour organiser votre calendrier.</p>
             </div>
-
             <form @submit.prevent="handleSignUp" class="auth-form">
                 <div class="form-group">
                     <label for="name">Nom complet</label>
@@ -38,6 +46,7 @@
                         <label for="password">Mot de passe</label>
                         <input v-model="password" id="password" type="password" placeholder="••••••••" required>
                     </div>
+
                     <div class="form-group">
                         <label for="confirmPassword">Confirmation</label>
                         <input v-model="confirmPassword" id="confirmPassword" type="password" placeholder="••••••••" required>
@@ -46,129 +55,193 @@
 
                 <button type="submit" class="btn-primary">S'inscrire</button>
 
-                <p class="footer-text">
-                    Déjà un compte ? 
-                    <router-link to="/" class="link">Se connecter</router-link>
-                </p>
+                <p class="footer-text"> Déjà un compte ? <router-link to="/" class="link">Se connecter</router-link></p>
             </form>
         </div>
     </div>
 </template>
 
 <style scoped>
+    /* --- CONFIGURATION DU DESIGN SYSTEM --- */
     .auth-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    /* Couleurs Mode Clair (Par défaut) */
+        --bg-page: #f8fafc;
+        --bg-card: #ffffff;
+        --text-title: #1e293b;
+        --text-body: #64748b;
+        --input-bg: #ffffff;
+        --input-border: #e2e8f0;
+        --primary-color: #6366f1;
+        --primary-hover: #4f46e5;
+        --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        
         min-height: 100vh;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-page);
+        color: var(--text-title);
+        transition: all 0.4s ease;
         font-family: 'Inter', system-ui, sans-serif;
-        padding: 20px;
     }
 
+    /* --- CLASSE POUR LE MODE SOMBRE --- */
+    /* (Il suffira d'ajouter cette classe au parent pour tout basculer) */
+    .auth-container.dark-mode {
+        --bg-page: #0f172a;
+        --bg-card: #1e293b;
+        --text-title: #f1f5f9;
+        --text-body: #94a3b8;
+        --input-bg: #334155;
+        --input-border: #475569;
+        --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* --- CARTE D'AUTHENTIFICATION --- */
     .auth-card {
-        background: white;
+        background-color: var(--bg-card);
         padding: 40px;
-        border-radius: 16px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
         width: 100%;
         max-width: 450px;
+        animation: cardFadeIn 0.8s ease-out;
     }
 
-    .header {
-        text-align: center;
-        margin-bottom: 32px;
-    }
-
-    h2 {
-        color: #1a202c;
-        font-size: 1.8rem;
-        margin-bottom: 8px;
+    .header h2 {
+        margin: 0 0 10px 0;
+        font-size: 24px;
+        font-weight: 800;
     }
 
     .header p {
-        color: #718096;
-        font-size: 0.95rem;
+    color: var(--text-body);
+    margin-bottom: 30px;
+    font-size: 14px;
+    }
+
+    /* --- FORMULAIRE & INPUTS --- */
+    .auth-form {
+        display: flex;
+        flex-direction: column;
     }
 
     .form-group {
         margin-bottom: 20px;
         display: flex;
         flex-direction: column;
+        text-align: left;
     }
 
-    /* Aligne mot de passe et confirmation côte à côte sur écran large */
     .form-group-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
         gap: 15px;
     }
 
-    @media (max-width: 480px) {
-        .form-group-row {
-            grid-template-columns: 1fr;
-        }
+    .form-group-row .form-group {
+        flex: 1;
     }
 
     label {
-        font-size: 0.85rem;
+        font-size: 13px;
         font-weight: 600;
-        color: #4a5568;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     input {
         padding: 12px 16px;
-        border: 1.5px solid #edf2f7;
         border-radius: 10px;
-        font-size: 1rem;
+        border: 2px solid var(--input-border);
+        background-color: var(--input-bg);
+        color: var(--text-title);
+        outline: none;
         transition: all 0.3s ease;
-        background-color: #f7fafc;
     }
 
     input:focus {
-        outline: none;
-        border-color: #4299e1;
-        background-color: #fff;
-        box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
     }
 
+    /* --- BOUTON PRINCIPAL --- */
     .btn-primary {
         width: 100%;
         padding: 14px;
-        background-color: #2d3748;
-        color: white;
+        margin-top: 10px;
         border: none;
         border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
+        background-color: var(--primary-color);
+        color: white;
+        font-size: 16px;
+        font-weight: 700;
         cursor: pointer;
-        margin-top: 10px;
-        transition: transform 0.1s, background-color 0.2s;
+        transition: all 0.3s ease;
     }
 
     .btn-primary:hover {
-        background-color: #1a202c;
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
     }
 
     .btn-primary:active {
-        transform: scale(0.98);
+        transform: translateY(0);
     }
 
+    /* --- TEXTE DE BAS DE PAGE --- */
     .footer-text {
-        text-align: center;
-        margin-top: 24px;
-        font-size: 0.9rem;
-        color: #718096;
+        margin-top: 25px;
+        font-size: 14px;
+        color: var(--text-body);
     }
 
     .link {
-        color: #4299e1;
+        color: var(--primary-color);
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 700;
+        transition: opacity 0.2s;
     }
 
     .link:hover {
         text-decoration: underline;
+        opacity: 0.8;
     }
+
+    /* --- ANIMATIONS --- */
+    @keyframes cardFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Effet d'apparition en cascade pour les éléments du formulaire */
+    .form-group, .btn-primary, .footer-text {
+        animation: fadeInSlide 0.5s ease-out both;
+    }
+
+    @keyframes fadeInSlide {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Délais pour l'effet de cascade */
+    .form-group:nth-child(1) { animation-delay: 0.2s; }
+    .form-group:nth-child(2) { animation-delay: 0.3s; }
+    .form-group-row { animation-delay: 0.4s; }
+    .btn-primary { animation-delay: 0.5s; }
+    .footer-text { animation-delay: 0.6s; }
 </style>
