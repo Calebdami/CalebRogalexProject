@@ -7,6 +7,7 @@
 <template>
     <div>
         <header>
+            <h1>Calendar</h1>
         </header>
         <main>
         </main>
