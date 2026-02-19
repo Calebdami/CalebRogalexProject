@@ -5,6 +5,7 @@
     import { useRouter } from 'vue-router';
     import authService from '@/services/authService';
 
+    const name = ref(authService.getUser().name);
     const router = useRouter();
     const daysOfWeek = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
     
@@ -131,7 +132,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900">Mon Planning</h1>
+                        <h1 class="text-xl font-bold text-slate-900">{{ name }} Planning</h1>
                         <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Vue Hebdomadaire</p>
                     </div>
                 </div>
