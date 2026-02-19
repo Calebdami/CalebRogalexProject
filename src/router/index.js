@@ -28,7 +28,6 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
 
     // 1️⃣ Route protégée → user non connecté
-    console.log(isAuthenticated);
     if (to.meta.requiresAuth && !isAuthenticated.value) {
         return next('/')
     }

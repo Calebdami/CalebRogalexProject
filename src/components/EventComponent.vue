@@ -7,107 +7,44 @@
 
     const dragStart = (event) => {
         event.dataTransfer.setData('taskId', props.theTask.id)
+        // Petit effet visuel pendant le drag
+        event.target.style.opacity = "0.5";
+        setTimeout(() => {
+            event.target.style.opacity = "1";
+        }, 0);
     }
 </script>
 
 <template>
-    <div class="task-item" draggable="true" @dragstart="dragStart">
-        <span>{{ theTask.title }}</span>
-        <button @click="emit('editTask')">✏️</button>
-        <button @click="emit('deleteTask')">🗑</button>
+    <div 
+        class="group bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-grab active:cursor-grabbing flex items-start justify-between gap-2"
+        draggable="true" 
+        @dragstart="dragStart"
+    >
+        <span class="text-sm font-medium text-slate-700 leading-tight break-words">
+            {{ theTask.title }}
+        </span>
+
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button 
+                @click="emit('editTask')" 
+                class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                title="Modifier"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            </button>
+            
+            <button 
+                @click="emit('deleteTask')" 
+                class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Supprimer"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+        </div>
     </div>
 </template>
-
-<style scoped>
-    /* --- STYLE DES CARTES DE TÂCHES --- */
-    .task-item {
-        --task-bg: var(--bg-card, #ffffff);
-        --task-text: var(--text-title, #1e293b);
-        --task-border: var(--input-border, #e2e8f0);
-        --accent-color: #6366f1;
-        
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        margin-bottom: 10px;
-        background-color: var(--task-bg);
-        color: var(--task-text);
-        border: 1px solid var(--task-border);
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        cursor: grab;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: popIn 0.3s ease-out both;
-    }
-
-    /* État lors du survol */
-    .task-item:hover {
-        transform: scale(1.02);
-        border-color: var(--accent-color);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-    }
-
-    /* État pendant le Drag (Saisie) */
-    .task-item:active {
-        cursor: grabbing;
-        opacity: 0.6;
-        transform: scale(0.98);
-    }
-
-    /* --- CONTENU DE LA TÂCHE --- */
-    .task-item span {
-        flex: 1;
-        font-size: 14px;
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis; /* Coupe le texte trop long proprement */
-        margin-right: 10px;
-    }
-
-    /* --- BOUTONS D'ACTION --- */
-    .task-item button {
-        background: transparent;
-        border: none;
-        font-size: 14px;
-        padding: 5px;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: background 0.2s;
-        opacity: 0.6; /* Discret par défaut */
-    }
-
-    .task-item:hover button {
-        opacity: 1; /* Apparaissent au survol de la tâche */
-    }
-
-    .task-item button:hover {
-        background-color: var(--secondary-bg, #f1f5f9);
-        transform: scale(1.2);
-    }
-
-    /* --- ANIMATIONS --- */
-    @keyframes popIn {
-        from {
-            opacity: 0;
-            transform: scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    /* --- ADAPTATION DARK MODE --- */
-    .dark-mode .task-item {
-        --task-bg: #334155;
-        --task-text: #f1f5f9;
-        --task-border: #475569;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .dark-mode .task-item button:hover {
-        background-color: #475569;
-    }
-</style>

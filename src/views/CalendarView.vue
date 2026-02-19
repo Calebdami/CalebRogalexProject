@@ -1,24 +1,33 @@
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, onMounted } from 'vue';
     import DayColumn from '@/components/DayColumn.vue';
     import AddNewEventComponent from '@/components/AddNewEventComponent.vue';
-
-    const daysOfWeek = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
     import { useRouter } from 'vue-router';
     import authService from '@/services/authService';
 
-    const router = useRouter()
-
-    const handleLogout = () => {
-        authService.logout()   // supprime currentUser + met isAuthenticated à false
-        router.replace('/')    // redirection propre (pas de retour arrière possible)
-    }
-    // SOURCE DE VÉRITÉ
+    const router = useRouter();
+    const daysOfWeek = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+    
+    // --- ÉTAT DES TÂCHES ---
     const tasks = ref([]);
-
     const selectedDay = ref(null);
     const isModalOpen = ref(false);
     const taskToEdit = ref(null);
+
+    // --- ÉTAT DES NOTIFICATIONS (TOASTS) ---
+    const showNotification = ref(false);
+    const notificationMessage = ref("");
+    const notificationType = ref("success"); // 'success' ou 'danger'
+
+    const triggerToast = (message, type = "success") => {
+        notificationMessage.value = message;
+        notificationType.value = type;
+        showNotification.value = true;
+        // Disparition automatique après 3 secondes
+        setTimeout(() => {
+            showNotification.value = false;
+        }, 3000);
+    }
 
     onMounted(() => {
         const saved = localStorage.getItem('tasks')
@@ -29,182 +38,148 @@
         localStorage.setItem('tasks', JSON.stringify(tasks.value))
     }
 
-    // Ouvrir modale pour ajout
+    const handleLogout = () => {
+        authService.logout()
+        router.replace('/')
+    }
+
     const openAddModal = (day) => {
         selectedDay.value = day;
         taskToEdit.value = null;
         isModalOpen.value = true;
     }
 
-    // Ajouter ou modifier
+    // Ajouter ou modifier avec notification
     const handleSaveTask = (task) => {
-        if (taskToEdit.value) {
+        const isEdit = !!taskToEdit.value;
+        if (isEdit) {
             const index = tasks.value.findIndex(t => t.id === task.id)
             tasks.value[index] = task
+            triggerToast("Tâche mise à jour avec succès !");
         } else {
             tasks.value.push(task)
+            triggerToast("Nouvelle tâche ajoutée !");
         }
         saveTasks()
         isModalOpen.value = false
     }
 
-    // Supprimer
+    // Supprimer avec CONFIRMATION et notification
     const deleteTask = (id) => {
-        tasks.value = tasks.value.filter(t => t.id !== id)
-        saveTasks()
+        const confirmDelete = confirm("Voulez-vous vraiment supprimer cette tâche ?");
+        if (confirmDelete) {
+            tasks.value = tasks.value.filter(t => t.id !== id)
+            saveTasks()
+            triggerToast("Tâche supprimée", "danger");
+        }
     }
 
-    // Editer
     const editTask = (task) => {
         selectedDay.value = task.day
         taskToEdit.value = task
         isModalOpen.value = true
     }
 
-    // Drag & Drop
     const handleDrop = (event, newDay) => {
         const taskId = event.dataTransfer.getData('taskId')
         const task = tasks.value.find(t => t.id == taskId)
         if (task) {
             task.day = newDay
             saveTasks()
+            triggerToast(`Déplacé vers ${newDay}`);
         }
     }
 </script>
 
 <template>
-    <AddNewEventComponent
-        v-if="isModalOpen"
-        :theDay="selectedDay"
-        :taskToEdit="taskToEdit"
-        @saveTask="handleSaveTask"
-        @close="isModalOpen = false"
-    />
-    <div class="calendar-grid">
-        <DayColumn
-        v-for="day in daysOfWeek"
-        :key="day"
-        :day="day"
-        :tasks="tasks.filter(t => t.day === day)"
-        @openAdd="openAddModal"
-        @editTask="editTask"
-        @deleteTask="deleteTask"
-        @dropTask="handleDrop"
+    <div class="min-h-screen bg-slate-50 flex flex-col relative overflow-x-hidden font-sans">
+        
+        <transition 
+            enter-active-class="transform transition duration-500 ease-out"
+            enter-from-class="-translate-y-full opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-300 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="-translate-y-full opacity-0"
+        >
+            <div 
+                v-if="showNotification"
+                class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-3 rounded-2xl shadow-2xl bg-white border-l-4 min-w-[340px]"
+                :class="notificationType === 'success' ? 'border-emerald-500' : 'border-red-500'"
+            >
+                <div :class="notificationType === 'success' ? 'text-emerald-500' : 'text-red-500'">
+                    <svg v-if="notificationType === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Système</span>
+                    <span class="text-sm font-bold text-slate-700">{{ notificationMessage }}</span>
+                </div>
+            </div>
+        </transition>
+
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 px-6 py-4">
+            <div class="max-w-[1600px] mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900">Mon Planning</h1>
+                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Vue Hebdomadaire</p>
+                    </div>
+                </div>
+
+                <button 
+                    @click="openAddModal('Lundi')" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-100 flex items-center gap-2 active:scale-95"
+                >
+                    <span class="text-lg">+</span> Nouvelle tâche
+                </button>
+            </div>        
+        </header>
+
+        <main class="flex-grow p-6 overflow-x-auto">
+            <div class="max-w-[1600px] mx-auto h-full">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-6 min-w-[1100px] lg:min-w-0">
+                    <DayColumn
+                        v-for="day in daysOfWeek"
+                        :key="day"
+                        :day="day"
+                        :tasks="tasks.filter(t => t.day === day)"
+                        @openAdd="openAddModal"
+                        @editTask="editTask"
+                        @deleteTask="deleteTask"
+                        @dropTask="handleDrop"
+                        class="bg-white/40 rounded-3xl border border-slate-200/60 p-2 transition-all"
+                    />
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-6 bg-white border-t border-slate-200 mt-auto">
+            <div class="max-w-[1600px] mx-auto flex justify-end">
+                <button 
+                    @click="handleLogout" 
+                    class="flex items-center gap-2 text-slate-400 hover:text-red-500 font-bold text-sm transition-all group px-4 py-2 rounded-lg hover:bg-red-50"
+                >
+                    <span class="group-hover:-translate-x-1 transition-transform">⎋</span> 
+                    Déconnexion
+                </button>
+            </div>
+        </footer>
+        <AddNewEventComponent
+            v-if="isModalOpen"
+            :theDay="selectedDay"
+            :taskToEdit="taskToEdit"
+            @saveTask="handleSaveTask"
+            @close="isModalOpen = false"
         />
     </div>
-    <div class="sidebar-bottom">
-        <button @click="handleLogout" class="btn-logout"> ⎋ Déconnexion </button>
-    </div>
 </template>
-
-<style scoped>
-    /* --- CONFIGURATION DU DASHBOARD --- */
-    .calendar-grid {
-        --bg-dashboard: #f1f5f9;
-        --bg-column: rgba(255, 255, 255, 0.6);
-        --column-border: #e2e8f0;
-        --text-day: #1e293b;
-        --btn-logout-bg: #fee2e2;
-        --btn-logout-text: #ef4444;
-        --btn-logout-hover: #b91c1c;
-        
-        display: grid;
-        grid-template-columns: repeat(7, minmax(150px, 1fr)); /* 7 colonnes égales */
-        gap: 16px;
-        padding: 24px;
-        background-color: var(--bg-dashboard);
-        min-height: calc(100vh - 80px); /* Ajusté pour laisser de la place au footer */
-        transition: all 0.4s ease;
-        overflow-x: auto; /* Scroll horizontal sur petit écran */
-    }
-
-    /* --- CLASSE DARK MODE --- */
-    .dark-mode .calendar-grid {
-        --bg-dashboard: #0f172a;
-        --bg-column: rgba(30, 41, 59, 0.7);
-        --column-border: #334155;
-        --text-day: #f1f5f9;
-        --btn-logout-bg: #450a0a;
-        --btn-logout-text: #fca5a5;
-    }
-
-    /* --- STYLE DES COLONNES (DayColumn) --- */
-    /* Note : Ces styles s'appliquent aux composants enfants */
-    :deep(.day-column) {
-        background-color: var(--bg-column);
-        border: 1px solid var(--column-border);
-        border-radius: 16px;
-        padding: 16px;
-        min-height: 500px;
-        backdrop-filter: blur(8px); /* Effet de verre moderne */
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        animation: slideUpFade 0.6s ease-out both;
-    }
-
-    :deep(.day-column:hover) {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    /* --- BARRE DE DÉCONNEXION --- */
-    .sidebar-bottom {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        padding: 15px 24px;
-        background: var(--bg-card); /* Utilise la variable de la carte auth si dispo */
-        border-top: 1px solid var(--column-border);
-        display: flex;
-        justify-content: flex-end;
-        z-index: 10;
-    }
-
-    .btn-logout {
-        background-color: var(--btn-logout-bg);
-        color: var(--btn-logout-text);
-        border: none;
-        padding: 10px 20px;
-        border-radius: 10px;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-logout:hover {
-        background-color: var(--btn-logout-text);
-        color: white;
-        transform: scale(1.05);
-    }
-
-    /* --- ANIMATIONS --- */
-    @keyframes slideUpFade {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Décalage de l'animation pour chaque colonne (effet cascade) */
-    :deep(.day-column:nth-child(1)) { animation-delay: 0.1s; }
-    :deep(.day-column:nth-child(2)) { animation-delay: 0.15s; }
-    :deep(.day-column:nth-child(3)) { animation-delay: 0.2s; }
-    :deep(.day-column:nth-child(4)) { animation-delay: 0.25s; }
-    :deep(.day-column:nth-child(5)) { animation-delay: 0.3s; }
-    :deep(.day-column:nth-child(6)) { animation-delay: 0.35s; }
-    :deep(.day-column:nth-child(7)) { animation-delay: 0.4s; }
-
-    /* --- RESPONSIVE --- */
-    @media (max-width: 1024px) {
-        .calendar-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-    }
-</style>
