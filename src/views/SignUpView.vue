@@ -1,174 +1,102 @@
 <script setup>
-    import { ref } from 'vue'
+    import { ref } from 'vue';
+    import authService from '@/services/authService';
+    import { useRouter } from 'vue-router';
 
-    const name = ref('')
-    const email = ref('')
-    const password = ref('')
-    const confirmPassword = ref('')
+    const router = useRouter();
+    const name = ref('');
+    const email = ref('');
+    const password = ref('');
+    const confirmPassword = ref('');
 
     const handleSignUp = () => {
         if (password.value !== confirmPassword.value) {
-            alert("Les mots de passe ne correspondent pas !")
-            return
+            alert("Les mots de passe ne correspondent pas !");
+            return;
         }
+        const result = authService.register(name.value, email.value, password.value);
+        if (result.success) {
+            alert("Compte créé ! Connectez-vous.");
+            router.push('/');
+        } 
+        else { alert(result.message) }
     }
 </script>
 
 <template>
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="header">
-                <h2>Créer un compte</h2>
-                <p>Rejoignez-nous pour organiser votre calendrier.</p>
+    <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Créer un compte</h2>
+                <p class="text-slate-500 mt-2">Rejoignez-nous pour organiser votre calendrier.</p>
             </div>
 
-            <form @submit.prevent="handleSignUp" class="auth-form">
-                <div class="form-group">
-                    <label for="name">Nom complet</label>
-                    <input v-model="name" id="name" type="text" placeholder="Jean Dupont" required>
+            <form @submit.prevent="handleSignUp" class="space-y-5">
+                
+                <div class="flex flex-col gap-1.5">
+                    <label for="name" class="text-sm font-semibold text-slate-700 ml-1">Nom complet</label>
+                    <input 
+                        v-model="name" 
+                        id="name" 
+                        type="text" 
+                        placeholder="Jean Dupont" 
+                        required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                    >
                 </div>
 
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input v-model="email" id="email" type="email" placeholder="jean@exemple.com" required>
+                <div class="flex flex-col gap-1.5">
+                    <label for="email" class="text-sm font-semibold text-slate-700 ml-1">Email</label>
+                    <input 
+                        v-model="email" 
+                        id="email" 
+                        type="email" 
+                        placeholder="jean@exemple.com" 
+                        required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                    >
                 </div>
 
-                <div class="form-group-row">
-                    <div class="form-group">
-                        <label for="password">Mot de passe</label>
-                        <input v-model="password" id="password" type="password" placeholder="••••••••" required>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label for="password" class="text-sm font-semibold text-slate-700 ml-1">Mot de passe</label>
+                        <input 
+                            v-model="password" 
+                            id="password" 
+                            type="password" 
+                            placeholder="••••••••" 
+                            required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                        >
                     </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirmation</label>
-                        <input v-model="confirmPassword" id="confirmPassword" type="password" placeholder="••••••••" required>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label for="confirmPassword" class="text-sm font-semibold text-slate-700 ml-1">Confirmation</label>
+                        <input 
+                            v-model="confirmPassword" 
+                            id="confirmPassword" 
+                            type="password" 
+                            placeholder="••••••••" 
+                            required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                        >
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary">S'inscrire</button>
+                <button 
+                    type="submit" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] mt-4"
+                >
+                    S'inscrire
+                </button>
 
-                <p class="footer-text">
+                <p class="text-center text-slate-600 text-sm mt-6">
                     Déjà un compte ? 
-                    <router-link to="/" class="link">Se connecter</router-link>
+                    <router-link to="/" class="text-indigo-600 font-bold hover:text-indigo-500 transition-colors">Se connecter</router-link>
                 </p>
             </form>
         </div>
     </div>
 </template>
-
-<style scoped>
-    .auth-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        font-family: 'Inter', system-ui, sans-serif;
-        padding: 20px;
-    }
-
-    .auth-card {
-        background: white;
-        padding: 40px;
-        border-radius: 16px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        max-width: 450px;
-    }
-
-    .header {
-        text-align: center;
-        margin-bottom: 32px;
-    }
-
-    h2 {
-        color: #1a202c;
-        font-size: 1.8rem;
-        margin-bottom: 8px;
-    }
-
-    .header p {
-        color: #718096;
-        font-size: 0.95rem;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Aligne mot de passe et confirmation côte à côte sur écran large */
-    .form-group-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-
-    @media (max-width: 480px) {
-        .form-group-row {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #4a5568;
-        margin-bottom: 6px;
-    }
-
-    input {
-        padding: 12px 16px;
-        border: 1.5px solid #edf2f7;
-        border-radius: 10px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background-color: #f7fafc;
-    }
-
-    input:focus {
-        outline: none;
-        border-color: #4299e1;
-        background-color: #fff;
-        box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
-    }
-
-    .btn-primary {
-        width: 100%;
-        padding: 14px;
-        background-color: #2d3748;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 10px;
-        transition: transform 0.1s, background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-        background-color: #1a202c;
-    }
-
-    .btn-primary:active {
-        transform: scale(0.98);
-    }
-
-    .footer-text {
-        text-align: center;
-        margin-top: 24px;
-        font-size: 0.9rem;
-        color: #718096;
-    }
-
-    .link {
-        color: #4299e1;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .link:hover {
-        text-decoration: underline;
-    }
-</style>
