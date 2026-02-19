@@ -21,7 +21,7 @@
         draggable="true" 
         @dragstart="dragStart"
     >
-        <span class="text-sm font-medium text-slate-700 leading-tight break-words">
+        <span class="text-sm font-medium text-slate-700 leading-tight break-all">
             {{ theTask.title }}
         </span>
 
